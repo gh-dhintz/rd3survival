@@ -12,7 +12,8 @@ An R htmlwidget that renders interactive Kaplan-Meier survival curves using D3.j
 - Log-rank p-value (stratified fits)
 - Number-at-risk table below the plot (ggsurvplot-style)
 - Confidence-interval bands (toggleable)
-- Fully customisable colours, axis labels, and title/subtitle
+- Dark (`"WoB"`) and light (`"BoW"`) colour-contrast themes
+- Fully customisable colours, axis labels, title/subtitle, and font sizes
 
 ## Installation
 
@@ -103,7 +104,9 @@ htmlwidgets::saveWidget(p, "km.html", selfcontained = TRUE)
 | `show_median` | logical | `TRUE` | Draw median crosshairs and annotation table |
 | `conf_int` | logical | `TRUE` | Show 95% CI bands |
 | `y_format` | string | `".2%"` | D3 format for y-axis ticks (see table below) |
-| `bg_color` | string | `"#232b2b"` | SVG background colour |
+| `y_tick_count` | numeric | `5` | Number of y-axis ticks (default gives 0%, 25%, 50%, 75%, 100%) |
+| `color_contrast` | string | `NULL` | `"WoB"` = white on black (default); `"BoW"` = black on white |
+| `bg_color` | string | `"#232b2b"` | SVG background colour (overridden by `color_contrast`) |
 | `width`, `height` | CSS/px | `NULL` | Widget dimensions; `NULL` fills container |
 | `elementId` | string | `NULL` | Fixed HTML element ID |
 
