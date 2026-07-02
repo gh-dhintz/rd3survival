@@ -15,6 +15,12 @@ An R htmlwidget that renders interactive Kaplan-Meier survival curves using D3.j
 - Dark (`"WoB"`) and light (`"BoW"`) colour-contrast themes
 - Fully customisable colours, axis labels, title/subtitle, and font sizes
 
+For a full walkthrough with screenshots of every feature, see the [Getting Started vignette](vignettes/rd3survival.Rmd).  After installing the package, open it in R with:
+
+```r
+vignette("rd3survival", package = "rd3survival")
+```
+
 ## Installation
 
 ```r
