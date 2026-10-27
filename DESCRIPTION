@@ -1,7 +1,7 @@
 Package: rd3survival
 Type: Package
 Title: Plots survival analysis with d3
-Version: 0.0.0.9002
+Version: 0.0.0.9003
 Author: Tom Coin
 Maintainer: Tom Coin <thomasjcoin@gmail.com>
 Description: Accepts survfit objects and plots survival curves in svg with D3.js

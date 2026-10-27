@@ -59,6 +59,21 @@ d3.survival = function(message) {
 
     var nest = nestData(message.data);
 
+    // The number-at-risk labels sit in the left margin (right-aligned at x = -18), so widen it to
+    // fit the longest one at its font size; the plot narrows and the SVG keeps its 960 width.
+    if (opts.risk_table && opts.risk_table.length) {
+      var probe = context.append('svg').style('position', 'absolute').style('visibility', 'hidden');
+      var labelW = 0;
+      nest.forEach(function(s) {
+        var t = probe.append('text').attr('class', 'risk-strata-label')
+          .call(fontSize, 'risk_font_size').text(dispLabel(s.key));
+        labelW = Math.max(labelW, t.node().getComputedTextLength());
+      });
+      probe.remove();
+      margin.left = Math.max(75, Math.ceil(labelW) + 18 + 6);
+      width = 960 - margin.left - margin.right;
+    }
+
     var extraTop = opts.subtitle ? 16 : 0;
     var totalW   = width + margin.left + margin.right;
 
