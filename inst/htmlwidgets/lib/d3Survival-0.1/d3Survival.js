@@ -1,3 +1,8 @@
+// d3Survival is written for d3 v5 (d3.nest, d3.event, d3.mouse were removed in v6). It runs
+// against the d3 v5 that d3.min.js just loaded, captured here as a local `d3`, and exposed only as
+// window.rd3survival_d3 -- so another d3 version on the page (before or after) cannot replace it.
+(function(d3) {
+
 d3.survival = function(message) {
   
   var margin = {top:30,left:75,bottom:50,right:40},
@@ -505,3 +510,11 @@ d3.survival = function(message) {
   return f;
   
 }
+
+window.rd3survival_d3 = d3;
+})(window.d3);
+
+// Give the page back the d3 it had before isolate-pre.js (if any). With none, leave no global, so
+// a d3 loaded later builds its own object instead of merging into this private v5.
+window.d3 = window.__rd3survival_prev_d3;
+delete window.__rd3survival_prev_d3;

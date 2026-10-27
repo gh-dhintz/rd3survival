@@ -14,6 +14,8 @@ HTMLWidgets.widget({
 
         // TODO: code to render the widget, e.g.
         //el.innerText = x.message;
+        // the package's private d3 v5 (see d3Survival.js), never the page's global d3
+        var d3 = window.rd3survival_d3;
         var surv = d3.survival(x)
         
         d3.select(el).call(surv);

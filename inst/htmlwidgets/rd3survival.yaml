@@ -1,8 +1,10 @@
 dependencies:
-  - name: D3
-    version: 5.5.0 
+  # Own name, not "D3": htmltools merges dependencies by name and would swap in another
+  # package's d3 version. isolate-pre.js must load before d3.min.js (see that file).
+  - name: rd3survival-d3
+    version: 5.5.0
     src: htmlwidgets/lib/d3-5.5.0
-    script: d3.min.js
+    script: [isolate-pre.js, d3.min.js]
   - name: d3Survival
     version: 0.1
     src: htmlwidgets/lib/d3Survival-0.1
