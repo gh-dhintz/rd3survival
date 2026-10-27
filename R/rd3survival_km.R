@@ -41,13 +41,26 @@
 #'   \code{paste0("Probability of ", event_var)}.
 #' @param x_break_every Numeric interval between x-axis tick marks and
 #'   number-at-risk columns.  Default \code{4}.
-#' @param show_median Logical.  When \code{TRUE} (default), draws dashed
-#'   median crosshairs and the annotation table.
+#' @param show_median Logical.  Show the median column of the annotation
+#'   table.  Default \code{TRUE}.  The cohort column (names and N) always shows.
+#' @param show_median_ci Logical.  Include the 95\% CI, "(lower, upper)", after
+#'   each median.  Default \code{TRUE}.
+#' @param show_median_lines Logical.  Draw the dashed 50\% line and a dashed
+#'   vertical line at each median.  Defaults to \code{show_median}.
+#' @param show_p_value Logical.  Show the log-rank p-value column (stratified
+#'   plots only).  Default \code{TRUE}.
 #' @param conf_int Logical.  When \code{TRUE} (default), shades 95\%
 #'   confidence-interval bands around each curve.
-#' @param y_tick_count Approximate number of y-axis ticks.  Default \code{5}
-#'   produces ticks at roughly 0\%, 25\%, 50\%, 75\%, 100\%.  Passed to
-#'   D3's \code{axis.ticks(n)}; the actual count may differ slightly.
+#' @param y_tick_count Number of evenly spaced y-axis ticks from 0 to 1.
+#'   Default \code{5} gives 0\%, 25\%, 50\%, 75\%, 100\%.
+#' @param axis_font_size Axis tick-label size in px.  \code{NULL} uses the
+#'   CSS default (10 px).
+#' @param axis_label_font_size Axis title size in px.  \code{NULL} uses the
+#'   CSS default (13 px).
+#' @param annotation_font_size Annotation table size in px.  \code{NULL}
+#'   uses the CSS default (12 px).  Rows and columns resize to fit.
+#' @param risk_font_size Number-at-risk table size in px.  \code{NULL} uses
+#'   the CSS default (11 px).
 #' @param y_format D3 format string controlling y-axis tick labels:
 #'   \describe{
 #'     \item{\code{".2\%"}}{100.00\% (default)}
@@ -123,6 +136,9 @@ rd3survival_km <- function(df,
                            y_label       = NULL,
                            x_break_every = 4,
                            show_median   = TRUE,
+                           show_median_ci    = TRUE,
+                           show_median_lines = show_median,
+                           show_p_value      = TRUE,
                            conf_int      = TRUE,
                            y_format      = NULL,
                            y_tick_count  = 5,
@@ -131,6 +147,10 @@ rd3survival_km <- function(df,
                            subtitle_x       = NULL,
                            title_font_size  = NULL,
                            subtitle_font_size = NULL,
+                           axis_font_size       = NULL,
+                           axis_label_font_size = NULL,
+                           annotation_font_size = NULL,
+                           risk_font_size       = NULL,
                            color_contrast = NULL,
                            bg_color      = NULL,
                            width         = NULL,
@@ -157,11 +177,6 @@ rd3survival_km <- function(df,
     nrow(df)
   }
 
-  fmt_median <- function(med, lcl, ucl, dec = 1) {
-    f <- function(v) if (is.na(v)) "NR" else as.character(round(v, dec))
-    paste0(f(med), " (", f(lcl), ", ", f(ucl), ")")
-  }
-
   # Log-rank p-value (only meaningful for stratified)
   p_value <- NULL
   if (!is.null(strat_var)) {
@@ -173,28 +188,17 @@ rd3survival_km <- function(df,
   tbl <- summary(surv_obj)$table
 
   if (is.null(strat_var)) {
-    medians <- list(list(
-      strata = "series",
-      val    = if (is.na(tbl[["median"]])) NULL else as.numeric(tbl[["median"]]),
-      label  = fmt_median(tbl[["median"]], tbl[["0.95LCL"]], tbl[["0.95UCL"]]),
-      n      = n_patients
-    ))
+    medians <- data.frame(strata = "series", median = tbl[["median"]],
+                          lower = tbl[["0.95LCL"]], upper = tbl[["0.95UCL"]], n = n_patients)
   } else {
     strata_n <- sapply(levels(factor(df[[strat_var]])), function(v) {
       sub_df <- df[df[[strat_var]] == v, ]
       if ("upk_key" %in% names(sub_df)) length(unique(sub_df[["upk_key"]])) else nrow(sub_df)
     })
     names(strata_n) <- paste0(strat_var, "=", names(strata_n))
-
-    medians <- lapply(seq_len(nrow(tbl)), function(i) {
-      rn <- rownames(tbl)[i]
-      list(
-        strata = rn,
-        val    = if (is.na(tbl[i, "median"])) NULL else as.numeric(tbl[i, "median"]),
-        label  = fmt_median(tbl[i, "median"], tbl[i, "0.95LCL"], tbl[i, "0.95UCL"]),
-        n      = as.integer(strata_n[[rn]])
-      )
-    })
+    medians <- data.frame(strata = rownames(tbl), median = tbl[, "median"],
+                          lower = tbl[, "0.95LCL"], upper = tbl[, "0.95UCL"],
+                          n = as.integer(strata_n[rownames(tbl)]))
   }
 
   # Risk table: n.risk at each x-break per strata
@@ -214,38 +218,40 @@ rd3survival_km <- function(df,
       stringsAsFactors = FALSE
     )
   }
-  risk_table <- lapply(seq_len(nrow(risk_df)), function(i) {
-    list(strata = risk_df$strata[i], time = risk_df$time[i], n_risk = risk_df$n_risk[i])
-  })
 
   rd3survival(
     surv_obj,
-    colors    = color,
-    title     = title,
-    bg_color  = bg_color,
-    width     = width,
-    height    = height,
-    elementId = elementId,
-    opts = list(
-      x_label     = x_label,
-      y_label     = y_label,
-      x_breaks    = x_breaks,
-      n_patients  = n_patients,
-      medians     = medians,
-      show_median = show_median,
-      conf_int    = conf_int,
-      endpoint    = endpoint,
-      time_unit   = time_unit,
-      p_value     = p_value,
-      risk_table  = risk_table,
-      y_format     = y_format,
-      y_tick_count = y_tick_count,
-      color_contrast     = color_contrast,
-      subtitle           = subtitle,
-      title_x            = title_x,
-      subtitle_x         = subtitle_x,
-      title_font_size    = title_font_size,
-      subtitle_font_size = subtitle_font_size
-    )
+    colors     = color,
+    title      = title,
+    bg_color   = bg_color,
+    medians    = medians,
+    risk_table = risk_df,
+    p_value    = p_value,
+    subtitle   = subtitle,
+    title_x    = title_x,
+    subtitle_x = subtitle_x,
+    endpoint   = endpoint,
+    time_unit  = time_unit,
+    x_label    = x_label,
+    y_label    = y_label,
+    x_breaks   = x_breaks,
+    y_format   = y_format,
+    y_tick_count   = y_tick_count,
+    color_contrast = color_contrast,
+    title_font_size      = title_font_size,
+    subtitle_font_size   = subtitle_font_size,
+    axis_font_size       = axis_font_size,
+    axis_label_font_size = axis_label_font_size,
+    annotation_font_size = annotation_font_size,
+    risk_font_size       = risk_font_size,
+    conf_int          = conf_int,
+    show_median       = show_median,
+    show_median_ci    = show_median_ci,
+    show_median_lines = show_median_lines,
+    show_p_value      = show_p_value,
+    opts       = list(n_patients = n_patients),
+    width      = width,
+    height     = height,
+    elementId  = elementId
   )
 }

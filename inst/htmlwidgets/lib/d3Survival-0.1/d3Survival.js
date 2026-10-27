@@ -38,6 +38,15 @@ d3.survival = function(message) {
 
     var opts = message.options || {};
 
+    // Optional font sizes (px) from R; null keeps the stylesheet's size.
+    function fontSize(sel, key) {
+      if (opts[key] != null) sel.style('font-size', opts[key] + 'px');
+      return sel;
+    }
+    var showMedian      = opts.show_median !== false;
+    var showMedianLines = opts.show_median_lines != null ? opts.show_median_lines !== false : showMedian;
+    var showP           = opts.show_p_value !== false && opts.p_value != null && opts.p_value !== '';
+
     var isBoW   = opts.color_contrast === 'BoW';
     var fg      = isBoW ? '#111111' : '#e9e9e9';
     var bgColor = isBoW ? '#ffffff' : (opts.bg_color || '#232b2b');
@@ -185,13 +194,16 @@ d3.survival = function(message) {
       .classed('axis y', true)
       .call(yAxis)
 
+    fontSize(svg.selectAll('.axis text'), 'axis_font_size');
+
     // Axis labels
     if (opts.x_label) {
       svg.append('text').attr('class', 'axis-label x')
         .attr('x', width / 2)
         .attr('y', height + margin.bottom - 8)
         .attr('text-anchor', 'middle')
-        .text(opts.x_label);
+        .text(opts.x_label)
+        .call(fontSize, 'axis_label_font_size');
     }
     if (opts.y_label) {
       svg.append('text').attr('class', 'axis-label y')
@@ -199,21 +211,24 @@ d3.survival = function(message) {
         .attr('x', -height / 2)
         .attr('y', -margin.left + 15)
         .attr('text-anchor', 'middle')
-        .text(opts.y_label);
+        .text(opts.y_label)
+        .call(fontSize, 'axis_label_font_size');
     }
 
-    // Annotation table: k x 3  (Cohort | Endpoint (unit) | P-value)
-    // Falls back to a simple legend when km-wrapper opts are absent.
-    var hasTableData = opts.medians && opts.medians.length && opts.medians[0].n != null;
+    // Annotation table: Cohort (N) | median (CI) | P-value. The median and P-value columns are
+    // optional (show_median / show_p_value; no p_value = no column). Every cell is measured as
+    // rendered, so any font and annotation_font_size line up. Falls back to a simple legend when
+    // no medians are supplied.
+    var hasTableData = opts.medians && opts.medians.length;
 
-    if (hasTableData && opts.show_median !== false) {
-      var lLen = 14, lPad = 5, rowH = 16, colGap = -30;
+    if (hasTableData) {
+      var annSize = opts.annotation_font_size || 12;
+      var lLen = 14, lPad = 5, rowH = Math.max(16, Math.round(annSize * 1.35)), colGap = 12;
 
       var epLabel = opts.endpoint
         ? opts.endpoint + (opts.time_unit ? ' (' + opts.time_unit + ')' : '')
         : 'Median';
 
-      // Pre-build content strings so we can measure them
       var col1Strs = nest.map(function(s) {
         var isReal = s.key !== 'series';
         var sm = opts.medians.filter(function(m) { return m.strata === s.key; })[0];
@@ -225,77 +240,49 @@ d3.survival = function(message) {
         return sm ? sm.label : '—';
       });
 
-      // Measure a single character width (Consolas is monospace → charW * len is exact)
-      var probe = svg.append('text').attr('class', 'annotation').text('X');
-      var charW = probe.node().getComputedTextLength();
-      probe.remove();
-
-      function maxLen(strs) {
-        return d3.max(strs, function(s) { return s.length; });
+      function textW(strs, cls) {
+        var w = 0;
+        strs.forEach(function(str) {
+          var t = svg.append('text').attr('class', cls).call(fontSize, 'annotation_font_size').text(str);
+          w = Math.max(w, t.node().getComputedTextLength());
+          t.remove();
+        });
+        return w;
       }
 
-      var maxC1 = maxLen(['Cohort'].concat(col1Strs)) * charW + lLen + lPad;
-      var maxC2 = maxLen([epLabel].concat(col2Strs))  * charW;
-      var maxC3 = maxLen(['P-value', opts.p_value || '']) * charW;
-
-      var xC = 0;
-      var xM = maxC1 + colGap;
-      var xP = xM + maxC2 + colGap;
-      var tableW = xP + maxC3;
+      var cols = [{ x: 0, head: 'Cohort', cells: col1Strs, swatch: true,
+                    w: lLen + lPad + Math.max(textW(['Cohort'], 'ann-header'), textW(col1Strs, 'annotation')) }];
+      if (showMedian) cols.push({ head: epLabel, cells: col2Strs,
+                    w: Math.max(textW([epLabel], 'ann-header'), textW(col2Strs, 'annotation')) });
+      if (showP) cols.push({ head: 'P-value', cells: [opts.p_value],
+                    w: Math.max(textW(['P-value'], 'ann-header'), textW([opts.p_value], 'annotation')) });
+      for (var ci = 1; ci < cols.length; ci++) cols[ci].x = cols[ci - 1].x + cols[ci - 1].w + colGap;
+      var tableW = cols[cols.length - 1].x + cols[cols.length - 1].w;
 
       var tblG = svg.append('g')
         .attr('transform', 'translate(' + (width - 5 - tableW) + ', 10)');
-      var annY = 0;
 
-      // Pad headers to the max data-row length for their column so every cell
-      // in a column is exactly the same pixel width (Consolas is monospace).
-      // This means col2 starts immediately after col1 content with zero slack.
-      function padEnd(s, n) {
-        var r = s;
-        while (r.length < n) r += ' '; // non-breaking space, same width as any char
-        return r;
-      }
-      var hdr1 = padEnd('Cohort',  maxLen(col1Strs));
-      var hdr2 = padEnd(epLabel,   maxLen(col2Strs));
-      var hdr3 = padEnd('P-value', maxLen(['P-value', opts.p_value || '']));
+      cols.forEach(function(c) {
+        tblG.append('text').attr('x', c.x + (c.swatch ? lLen + lPad : 0)).attr('y', 4)
+          .attr('text-anchor', 'start').attr('class', 'ann-header')
+          .call(fontSize, 'annotation_font_size').text(c.head);
+      });
 
-      // Header row — left-aligned to match data rows
-      tblG.append('text').attr('x', xC + lLen + lPad).attr('y', annY + 4)
-        .attr('text-anchor', 'start').attr('class', 'ann-header').text(hdr1);
-      tblG.append('text').attr('x', xM).attr('y', annY + 4)
-        .attr('text-anchor', 'start').attr('class', 'ann-header').text(hdr2);
-      tblG.append('text').attr('x', xP).attr('y', annY + 4)
-        .attr('text-anchor', 'start').attr('class', 'ann-header').text(hdr3);
-      annY += rowH;
-
-      // Data rows
       nest.forEach(function(s, si) {
         var clr  = color(s.key);
-        var sm   = opts.medians.filter(function(m) { return m.strata === s.key; })[0];
-
+        var rowY = (si + 1) * rowH;
         tblG.append('line')
-          .attr('x1', xC).attr('x2', xC + lLen)
-          .attr('y1', annY).attr('y2', annY)
+          .attr('x1', 0).attr('x2', lLen)
+          .attr('y1', rowY).attr('y2', rowY)
           .style('stroke', clr).style('stroke-width', 2);
-        tblG.append('text')
-          .attr('x', xC + lLen + lPad).attr('y', annY + 4)
-          .attr('text-anchor', 'start').attr('class', 'annotation')
-          .style('fill', clr)
-          .text(col1Strs[si]);
-
-        tblG.append('text')
-          .attr('x', xM).attr('y', annY + 4)
-          .attr('text-anchor', 'start').attr('class', 'annotation')
-          .text(col2Strs[si]);
-
-        if (si === 0 && opts.p_value) {
-          tblG.append('text')
-            .attr('x', xP).attr('y', annY + 4)
+        cols.forEach(function(c, k) {
+          if (si >= c.cells.length) return;   // the p-value has one cell, on the first row
+          var t = tblG.append('text')
+            .attr('x', c.x + (c.swatch ? lLen + lPad : 0)).attr('y', rowY + 4)
             .attr('text-anchor', 'start').attr('class', 'annotation')
-            .text(opts.p_value);
-        }
-
-        annY += rowH;
+            .call(fontSize, 'annotation_font_size').text(c.cells[si]);
+          if (k === 0) t.style('fill', clr);
+        });
       });
 
     } else if (nest.length > 1 || nest[0].key !== 'series') {
@@ -311,12 +298,13 @@ d3.survival = function(message) {
         legG.append('text')
           .attr('x', -(lLen2 + lPad2 * 2)).attr('y', i * legRowH + 4)
           .attr('text-anchor', 'end').attr('class', 'legend-label')
+          .call(fontSize, 'annotation_font_size')
           .text(s.key);
       });
     }
 
     // Median crosshair reference lines (clipped to plot area)
-    if (opts.show_median && opts.medians && opts.medians.length) {
+    if (showMedianLines && opts.medians && opts.medians.length) {
       var refGroup = svg.append('g').attr('clip-path', 'url(#limit-clip)');
 
       refGroup.append('line')
@@ -424,6 +412,7 @@ d3.survival = function(message) {
             svg.select('.axis.x').call(xAxis)
             svg.select('.grid.x').call(xGrid)
             svg.selectAll('.axis text').style('fill', fg)
+            fontSize(svg.selectAll('.axis text'), 'axis_font_size')
             svg.selectAll('.axis path, .axis line').style('stroke', fg)
             svg.selectAll('.grid path, .grid line').style('stroke', fg)
             svg.selectAll('line.median-ref.horiz')
@@ -454,7 +443,7 @@ d3.survival = function(message) {
 
     // Risk table below main plot
     if (opts.risk_table && opts.risk_table.length) {
-      var riskRowH = 18, riskTopPad = 14, riskBotPad = 10;
+      var riskRowH = Math.max(18, Math.round((opts.risk_font_size || 11) * 1.6)), riskTopPad = 14, riskBotPad = 10;
 
       var riskByKey = {};
       opts.risk_table.forEach(function(d) {
@@ -475,6 +464,7 @@ d3.survival = function(message) {
       riskG.append('text')
         .attr('x', -5).attr('y', 0)
         .attr('text-anchor', 'end').attr('class', 'risk-title')
+        .call(fontSize, 'risk_font_size')
         .text('No. at risk');
 
       riskStrata.forEach(function(s, i) {
@@ -484,6 +474,7 @@ d3.survival = function(message) {
           .attr('x', -18).attr('y', rowY)
           .attr('text-anchor', 'end').attr('class', 'risk-strata-label')
           .style('fill', clr)
+          .call(fontSize, 'risk_font_size')
           .text(dispLabel(s.key));
         s.values.forEach(function(d) {
           riskG.append('text')
@@ -491,6 +482,7 @@ d3.survival = function(message) {
             .datum(d.time)
             .attr('x', x(d.time)).attr('y', rowY)
             .attr('text-anchor', 'middle')
+            .call(fontSize, 'risk_font_size')
             .text(d.n_risk);
         });
       });

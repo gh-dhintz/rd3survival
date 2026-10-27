@@ -163,9 +163,19 @@ rd3survival_km(
   event_var     = "status",
   strat_var     = "sex_label",
   x_break_every = 100,
-  show_median   = FALSE,   # hide crosshairs and annotation table
-  conf_int      = FALSE    # hide confidence-interval bands
+  show_median   = FALSE,   # hide the median column (and, by default, the crosshairs)
+  conf_int      = FALSE    # hide confidence-interval shading
 )
+```
+
+Each element has its own switch: `show_median_ci = FALSE` keeps the medians but drops their CI;
+`show_median_lines = FALSE` drops only the crosshairs; `show_p_value = FALSE` drops the p-value
+column. The cohort column (names and N) always shows.
+
+```{r fonts, eval = FALSE}
+rd3survival_km(lung2, "time", "status", "sex_label", x_break_every = 100,
+  title_font_size = 20, axis_font_size = 14, axis_label_font_size = 15,
+  annotation_font_size = 13, risk_font_size = 12)
 ```
 
 ![Stratified plot with median crosshairs and CI bands hidden.](img/06_hidden.png)
@@ -315,14 +325,22 @@ shinyApp(ui, server)
 | `subtitle_x` | `NULL` | Subtitle x start; `NULL` = centred |
 | `title_font_size` | `NULL` | Title font size (px); default 16 |
 | `subtitle_font_size` | `NULL` | Subtitle font size (px); default 12 |
+| `axis_font_size` | `NULL` | Axis tick-label size (px); default 10 |
+| `axis_label_font_size` | `NULL` | Axis title size (px); default 13 |
+| `annotation_font_size` | `NULL` | Annotation table size (px); default 12 |
+| `risk_font_size` | `NULL` | Number-at-risk table size (px); default 11 |
 | `endpoint` | `NULL` | Annotation table endpoint label |
 | `time_unit` | `NULL` | Annotation table time unit |
 | `x_label` | `"Time (months)"` | X-axis label |
 | `y_label` | auto | Y-axis label |
 | `x_break_every` | `4` | X-axis tick interval |
-| `show_median` | `TRUE` | Show median crosshairs and table |
-| `conf_int` | `TRUE` | Show 95% CI bands |
+| `show_median` | `TRUE` | Show the median column |
+| `show_median_ci` | `TRUE` | Show each median's 95% CI |
+| `show_median_lines` | `show_median` | Draw median crosshairs |
+| `show_p_value` | `TRUE` | Show the p-value column |
+| `conf_int` | `TRUE` | Shade 95% CI bands |
 | `y_format` | `".2%"` | D3 y-axis format string |
+| `y_tick_count` | `5` | Number of y-axis ticks from 0 to 1 |
 | `bg_color` | `"#232b2b"` | SVG background colour |
 | `width`, `height` | `NULL` | Widget dimensions |
 | `elementId` | `NULL` | Fixed HTML element ID |

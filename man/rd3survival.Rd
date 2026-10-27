@@ -11,6 +11,31 @@ rd3survival(
   title = NULL,
   xlim = NULL,
   ylim = NULL,
+  medians = NULL,
+  risk_table = NULL,
+  p_value = NULL,
+  subtitle = NULL,
+  title_x = NULL,
+  subtitle_x = NULL,
+  endpoint = NULL,
+  time_unit = NULL,
+  x_label = NULL,
+  y_label = NULL,
+  x_breaks = NULL,
+  y_format = NULL,
+  y_tick_count = NULL,
+  color_contrast = NULL,
+  title_font_size = NULL,
+  subtitle_font_size = NULL,
+  axis_font_size = NULL,
+  axis_label_font_size = NULL,
+  annotation_font_size = NULL,
+  risk_font_size = NULL,
+  conf_int = TRUE,
+  show_median = TRUE,
+  show_median_ci = TRUE,
+  show_median_lines = show_median,
+  show_p_value = TRUE,
   opts = list(),
   width = NULL,
   height = NULL,
@@ -18,70 +43,105 @@ rd3survival(
 )
 }
 \arguments{
-\item{sf}{A \code{survfit} object produced by
-\code{\link[survival]{survfit}}.  Both single-arm (\code{~ 1}) and
-stratified (\code{~ strat_var}) fits are supported.}
+\item{sf}{Either a \code{survfit} object (single-arm \code{~ 1} or
+stratified), or a data frame of curve rows with columns \code{time} and
+\code{estimate}, and optionally \code{conf.low}, \code{conf.high},
+\code{n.risk} and \code{strata} (the layout of \code{broom::tidy(survfit)}).
+The data frame form draws curves computed elsewhere, e.g. already
+truncated or with masked counts; \code{n.risk} may be character.}
 
 \item{bg_color}{Background colour of the SVG as a CSS colour string.
 Default \code{"#232b2b"} (dark charcoal).}
 
-\item{colors}{Character vector of hex or named CSS colours, one per strata,
-applied in the order strata appear in \code{sf}.  When \code{NULL}
-(default) the D3 category-10 palette is used.}
+\item{colors}{Character vector of colours, one per strata, in the order the
+strata first appear in the curve rows.  \code{NULL} uses the D3
+category-10 palette.}
 
 \item{title}{Chart title rendered above the plot area.}
 
-\item{xlim}{Numeric vector of length 2 setting the x-axis limits
-\code{c(min, max)}.  Defaults to the observed time range.}
+\item{xlim, ylim}{Numeric vectors of length 2 setting the axis limits.
+Default: the observed time range and CI range.}
 
-\item{ylim}{Numeric vector of length 2 setting the y-axis limits
-\code{c(min, max)}.  Defaults to the observed survival probability range.}
+\item{medians}{Median annotations: a data frame with columns \code{strata}
+(matching the curve strata), \code{median}, and optionally \code{lower},
+\code{upper} (the CI) and \code{n} (shown as "(N=n)"; may be character).
+\code{NA} medians show as "NR".  Without it the chart shows a plain legend.}
 
-\item{opts}{Named list of additional options passed directly to the
-JavaScript renderer.  Useful keys (all optional):
-\describe{
-  \item{\code{x_breaks}}{Numeric vector of explicit x-axis tick positions.}
-  \item{\code{x_label}}{X-axis label string.}
-  \item{\code{y_label}}{Y-axis label string.}
-  \item{\code{y_format}}{D3 format string for y-axis ticks, e.g.
-    \code{".0\%"} (default \code{".2\%"}).}
-  \item{\code{conf_int}}{Logical. Show confidence-interval bands
-    (default \code{TRUE}).}
-  \item{\code{show_median}}{Logical. Draw dashed median crosshairs and
-    annotation table (default \code{TRUE}).}
-  \item{\code{medians}}{List of per-strata median objects produced by
-    \code{rd3survival_km}. Each element: \code{list(strata, val, label, n)}.}
-  \item{\code{n_patients}}{Integer total patient count shown as "N = X".}
-  \item{\code{endpoint}}{Endpoint label for the annotation table
-    (e.g. \code{"OS"}).}
-  \item{\code{time_unit}}{Time unit label (e.g. \code{"Months"}).}
-  \item{\code{p_value}}{Pre-formatted log-rank p-value string.}
-  \item{\code{risk_table}}{List of \code{list(strata, time, n_risk)}
-    records for the at-risk table below the plot.}
-  \item{\code{subtitle}}{Subtitle string rendered below the title.}
-  \item{\code{title_x}}{Title x start as a proportion of total SVG width
-    (0–1). \code{NULL} centres the title.}
-  \item{\code{subtitle_x}}{Subtitle x start proportion. \code{NULL}
-    centres the subtitle.}
-  \item{\code{title_font_size}}{Title font size in pixels.}
-  \item{\code{subtitle_font_size}}{Subtitle font size in pixels.}
-}}
+\item{risk_table}{Number-at-risk table below the plot: a data frame with
+columns \code{strata}, \code{time} and \code{n_risk} (may be character,
+e.g. masked counts).}
 
-\item{width, height}{Widget width and height as a valid CSS unit string or
-pixel integer.  \code{NULL} (default) fills the containing element.}
+\item{p_value}{Pre-formatted p-value string shown in the annotation table.}
+
+\item{subtitle}{Subtitle rendered below the title.}
+
+\item{title_x, subtitle_x}{Horizontal start of the title / subtitle as a
+proportion of the SVG width (0-1).  \code{NULL} centres it.}
+
+\item{endpoint, time_unit}{Endpoint label and unit for the median column
+header, e.g. \code{"OS"} and \code{"Months"} give "OS (Months)".}
+
+\item{x_label, y_label}{Axis titles.}
+
+\item{x_breaks}{Numeric vector of x-axis tick positions (also where
+\code{risk_table} counts are expected).}
+
+\item{y_format}{D3 format string for y-axis ticks, e.g. \code{".0\%"}
+(default \code{".2\%"}).}
+
+\item{y_tick_count}{Number of evenly spaced y-axis ticks from 0 to 1.
+Default 5 (0\%, 25\%, ..., 100\%).}
+
+\item{color_contrast}{\code{"WoB"} (white on black, default) or
+\code{"BoW"} (black on white).}
+
+\item{title_font_size, subtitle_font_size}{Title / subtitle size in px
+(defaults 16 and 12).}
+
+\item{axis_font_size}{Axis tick-label size in px (default 10).}
+
+\item{axis_label_font_size}{Axis title size in px (default 13).}
+
+\item{annotation_font_size}{Annotation table (and legend) size in px
+(default 12).  Rows and columns resize to fit.}
+
+\item{risk_font_size}{Number-at-risk table size in px (default 11).}
+
+\item{conf_int}{Logical.  Shade the 95\% CI band around each curve.
+Default \code{TRUE}.}
+
+\item{show_median}{Logical.  Show the median column of the annotation
+table.  Default \code{TRUE}.}
+
+\item{show_median_ci}{Logical.  Include the CI, "(lower, upper)", after
+each median.  Default \code{TRUE}.}
+
+\item{show_median_lines}{Logical.  Draw the dashed 50\% line and a dashed
+vertical line at each median.  Defaults to \code{show_median}.}
+
+\item{show_p_value}{Logical.  Show the P-value column (only drawn when a
+\code{p_value} is given).  Default \code{TRUE}.}
+
+\item{opts}{Named list of further renderer options.  Named arguments take
+precedence over the same key in \code{opts}.}
+
+\item{width, height}{Widget width and height as a CSS unit string or pixel
+integer.  \code{NULL} (default) fills the containing element.}
 
 \item{elementId}{Optional fixed HTML element ID for the widget.}
 }
 \value{
-An \code{htmlwidget} object that renders in the RStudio Viewer,
-  R Markdown documents, and Shiny apps.  Use
+An \code{htmlwidget} object that renders in the RStudio / Positron
+  Viewer, R Markdown and Quarto documents, and Shiny apps.  Use
   \code{\link[htmlwidgets]{saveWidget}} to export a self-contained HTML file.
 }
 \description{
-Renders a \code{survfit} object as an interactive SVG survival curve using
-D3.js v5.  Supports single-arm and stratified fits, brush-to-zoom, and
-hover tooltips.  For a higher-level wrapper that accepts a raw data frame
-and computes the fit for you, see \code{\link{rd3survival_km}}.
+Renders survival curves as an interactive SVG using D3.js v5, from either a
+\code{survfit} object or a data frame of pre-computed curve rows.  Supports
+single-arm and stratified curves, brush-to-zoom, hover tooltips, an
+annotation table (cohort, median, p-value) and a number-at-risk table.  For
+a wrapper that fits the model from patient-level data and fills in the
+medians, p-value and at-risk table for you, see \code{\link{rd3survival_km}}.
 }
 \examples{
 library(survival)
@@ -92,14 +152,27 @@ lung2$status <- lung2$status - 1
 sf <- survfit(Surv(time, status) ~ 1, data = lung2)
 rd3survival(sf)
 
-# Stratified with custom colours
+# Stratified with custom colours, bigger text, no CI shading
 lung2$sex_label <- ifelse(lung2$sex == 1, "Male", "Female")
 sf2 <- survfit(Surv(time, status) ~ sex_label, data = lung2)
 rd3survival(sf2,
   title    = "Overall Survival by Sex",
   bg_color = "#1a1a2e",
-  colors   = c("#e94560", "#0f3460")
+  colors   = c("#e94560", "#0f3460"),
+  axis_font_size = 14, title_font_size = 20,
+  conf_int = FALSE
 )
+
+# Pre-computed curve rows with your own medians and at-risk counts
+tbl  <- summary(sf2)$table
+risk <- summary(sf2, times = c(0, 500, 1000), extend = TRUE)
+rd3survival(broom::tidy(sf2),
+  medians    = data.frame(strata = rownames(tbl), median = tbl[, "median"],
+                          lower = tbl[, "0.95LCL"], upper = tbl[, "0.95UCL"],
+                          n = tbl[, "records"]),
+  risk_table = data.frame(strata = risk$strata, time = risk$time, n_risk = risk$n.risk),
+  x_breaks = c(0, 500, 1000), endpoint = "OS", time_unit = "Days",
+  show_median_ci = FALSE)
 
 }
 \seealso{

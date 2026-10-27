@@ -102,13 +102,20 @@ htmlwidgets::saveWidget(p, "km.html", selfcontained = TRUE)
 | `subtitle_x` | 0–1 | `NULL` | Subtitle horizontal start position; `NULL` centres |
 | `title_font_size` | numeric | `NULL` | Title font size in px (default 16) |
 | `subtitle_font_size` | numeric | `NULL` | Subtitle font size in px (default 12) |
+| `axis_font_size` | numeric | `NULL` | Axis tick-label font size in px (default 10) |
+| `axis_label_font_size` | numeric | `NULL` | Axis title font size in px (default 13) |
+| `annotation_font_size` | numeric | `NULL` | Annotation table font size in px (default 12); rows and columns resize to fit |
+| `risk_font_size` | numeric | `NULL` | Number-at-risk table font size in px (default 11) |
 | `endpoint` | string | `NULL` | Endpoint label for annotation table (e.g. `"OS"`) |
 | `time_unit` | string | `NULL` | Time unit for annotation table (e.g. `"Months"`) |
 | `x_label` | string | `"Time (months)"` | X-axis label |
 | `y_label` | string | auto | Y-axis label; defaults to `"Probability of <event_var>"` |
 | `x_break_every` | numeric | `4` | Interval between x-axis ticks and risk-table columns |
-| `show_median` | logical | `TRUE` | Draw median crosshairs and annotation table |
-| `conf_int` | logical | `TRUE` | Show 95% CI bands |
+| `show_median` | logical | `TRUE` | Show the median column of the annotation table |
+| `show_median_ci` | logical | `TRUE` | Show the 95% CI after each median |
+| `show_median_lines` | logical | `show_median` | Draw the dashed 50% line and median crosshairs |
+| `show_p_value` | logical | `TRUE` | Show the log-rank p-value column (stratified only) |
+| `conf_int` | logical | `TRUE` | Shade the 95% CI band around each curve |
 | `y_format` | string | `".2%"` | D3 format for y-axis ticks (see table below) |
 | `y_tick_count` | numeric | `5` | Number of y-axis ticks (default gives 0%, 25%, 50%, 75%, 100%) |
 | `color_contrast` | string | `NULL` | `"WoB"` = white on black (default); `"BoW"` = black on white |
@@ -127,7 +134,15 @@ htmlwidgets::saveWidget(p, "km.html", selfcontained = TRUE)
 
 ### `rd3survival()`
 
-Lower-level entry point that accepts a `survfit` object.  Accepts the same `bg_color`, `colors`, `title`, `xlim`, `ylim` named arguments, plus an `opts` list for any key accepted by `rd3survival_km()` (see `?rd3survival` for the full `opts` key reference).
+Lower-level entry point. `sf` is a `survfit` object **or** a data frame of pre-computed curve rows (`time`, `estimate`, and optionally `conf.low`, `conf.high`, `n.risk`, `strata`), for curves computed elsewhere (e.g. truncated, or with masked counts).
+
+It takes the same display arguments as `rd3survival_km()`: the fonts, the `show_*` switches, `conf_int`, `y_tick_count` and so on. It also takes `colors`, `xlim` and `ylim`, plus the annotations as plain data frames:
+
+- `medians`: `strata`, `median`, and optionally `lower`, `upper`, `n`.
+- `risk_table`: `strata`, `time`, `n_risk`.
+- `p_value`: a pre-formatted string.
+
+See `?rd3survival`.
 
 ## Interactivity
 

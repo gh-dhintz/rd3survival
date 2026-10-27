@@ -17,6 +17,9 @@ rd3survival_km(
   y_label = NULL,
   x_break_every = 4,
   show_median = TRUE,
+  show_median_ci = TRUE,
+  show_median_lines = show_median,
+  show_p_value = TRUE,
   conf_int = TRUE,
   y_format = NULL,
   y_tick_count = 5,
@@ -25,6 +28,11 @@ rd3survival_km(
   subtitle_x = NULL,
   title_font_size = NULL,
   subtitle_font_size = NULL,
+  axis_font_size = NULL,
+  axis_label_font_size = NULL,
+  annotation_font_size = NULL,
+  risk_font_size = NULL,
+  color_contrast = NULL,
   bg_color = NULL,
   width = NULL,
   height = NULL,
@@ -62,8 +70,17 @@ e.g. \code{"Months"}, \code{"Days"}.}
 \item{x_break_every}{Numeric interval between x-axis tick marks and
 number-at-risk columns.  Default \code{4}.}
 
-\item{show_median}{Logical.  When \code{TRUE} (default), draws dashed
-median crosshairs and the annotation table.}
+\item{show_median}{Logical.  Show the median column of the annotation
+table.  Default \code{TRUE}.  The cohort column (names and N) always shows.}
+
+\item{show_median_ci}{Logical.  Include the 95\% CI, "(lower, upper)", after
+each median.  Default \code{TRUE}.}
+
+\item{show_median_lines}{Logical.  Draw the dashed 50\% line and a dashed
+vertical line at each median.  Defaults to \code{show_median}.}
+
+\item{show_p_value}{Logical.  Show the log-rank p-value column (stratified
+plots only).  Default \code{TRUE}.}
 
 \item{conf_int}{Logical.  When \code{TRUE} (default), shades 95\%
 confidence-interval bands around each curve.}
@@ -76,9 +93,8 @@ confidence-interval bands around each curve.}
   \item{\code{".0f"}}{1}
 }}
 
-\item{y_tick_count}{Approximate number of y-axis ticks.  Default \code{5}
-produces ticks at roughly 0\%, 25\%, 50\%, 75\%, 100\%.  Passed to
-D3's \code{axis.ticks(n)}; the actual count may differ slightly.}
+\item{y_tick_count}{Number of evenly spaced y-axis ticks from 0 to 1.
+Default \code{5} gives 0\%, 25\%, 50\%, 75\%, 100\%.}
 
 \item{subtitle}{Optional subtitle rendered in smaller text below the title.}
 
@@ -94,6 +110,18 @@ CSS default (16 px).}
 
 \item{subtitle_font_size}{Subtitle font size in pixels.  \code{NULL} uses
 the CSS default (12 px).}
+
+\item{axis_font_size}{Axis tick-label size in px.  \code{NULL} uses the
+CSS default (10 px).}
+
+\item{axis_label_font_size}{Axis title size in px.  \code{NULL} uses the
+CSS default (13 px).}
+
+\item{annotation_font_size}{Annotation table size in px.  \code{NULL}
+uses the CSS default (12 px).  Rows and columns resize to fit.}
+
+\item{risk_font_size}{Number-at-risk table size in px.  \code{NULL} uses
+the CSS default (11 px).}
 
 \item{bg_color}{SVG background colour as a CSS colour string.  Default
 \code{"#232b2b"}.}
