@@ -338,6 +338,8 @@ shinyApp(ui, server)
 | `show_median_ci` | `TRUE` | Show each median's 95% CI |
 | `show_median_lines` | `show_median` | Draw median crosshairs |
 | `show_p_value` | `TRUE` | Show the p-value column |
+| `censor_marks` | `TRUE` | Tick the curve at each censoring time |
+| `censor_size` | `8` | Censor tick height in px |
 | `conf_int` | `TRUE` | Shade 95% CI bands |
 | `y_format` | `".2%"` | D3 y-axis format string |
 | `y_tick_count` | `5` | Number of y-axis ticks from 0 to 1 |

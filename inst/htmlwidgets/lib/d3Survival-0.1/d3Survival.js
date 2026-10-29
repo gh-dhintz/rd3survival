@@ -198,6 +198,26 @@ d3.survival = function(message) {
       .classed('estimate',true)
       .attr('d', function(d) { return line(d.values)})
       .style('stroke', function(d) { return color(d.key)});
+
+    // Censor marks: a short vertical tick on the curve at every row with n.censor > 0 (one tick
+    // per time, however many were censored then). Rows without an n.censor column draw none.
+    var censorH = opts.censor_size || 8;
+    function placeCensor(sel) {
+      sel.attr('x1', function(d) { return x(d.time); })
+         .attr('x2', function(d) { return x(d.time); })
+         .attr('y1', function(d) { return y(d.estimate) - censorH / 2; })
+         .attr('y2', function(d) { return y(d.estimate) + censorH / 2; });
+    }
+    if (opts.censor_marks !== false) {
+      strata.each(function(s) {
+        d3.select(this).selectAll('line.censor')
+          .data(s.values.filter(function(r) { return r['n.censor'] > 0; }))
+          .enter().append('line')
+          .classed('censor', true)
+          .style('stroke', color(s.key))
+          .call(placeCensor);
+      });
+    }
       
       
     svg.append('g')
@@ -422,6 +442,7 @@ d3.survival = function(message) {
             y.domain(yDomain).nice()
             conf.attr('d', function(d) { return area(d.values)})
             estimate.attr('d', function(d) { return line(d.values)})
+            svg.selectAll('line.censor').call(placeCensor)
             svg.select('.axis.y').call(yAxis)
             svg.select('.grid.y').call(yGrid)
             svg.select('.axis.x').call(xAxis)

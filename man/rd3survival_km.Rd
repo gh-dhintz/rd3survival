@@ -20,6 +20,8 @@ rd3survival_km(
   show_median_ci = TRUE,
   show_median_lines = show_median,
   show_p_value = TRUE,
+  censor_marks = TRUE,
+  censor_size = NULL,
   conf_int = TRUE,
   y_format = NULL,
   y_tick_count = 5,
@@ -81,6 +83,9 @@ vertical line at each median.  Defaults to \code{show_median}.}
 
 \item{show_p_value}{Logical.  Show the log-rank p-value column (stratified
 plots only).  Default \code{TRUE}.}
+
+\item{censor_marks, censor_size}{Censor ticks on the curves; see
+\code{\link{rd3survival}}.}
 
 \item{conf_int}{Logical.  When \code{TRUE} (default), shades 95\%
 confidence-interval bands around each curve.}

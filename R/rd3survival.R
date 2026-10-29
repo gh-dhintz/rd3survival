@@ -12,7 +12,8 @@
 #' @param sf Either a \code{survfit} object (single-arm \code{~ 1} or
 #'   stratified), or a data frame of curve rows with columns \code{time} and
 #'   \code{estimate}, and optionally \code{conf.low}, \code{conf.high},
-#'   \code{n.risk} and \code{strata} (the layout of \code{broom::tidy(survfit)}).
+#'   \code{n.risk}, \code{n.censor} and \code{strata} (the layout of
+#'   \code{broom::tidy(survfit)}).  Censor marks need \code{n.censor}.
 #'   The data frame form draws curves computed elsewhere, e.g. already
 #'   truncated or with masked counts; \code{n.risk} may be character.
 #' @param bg_color Background colour of the SVG as a CSS colour string.
@@ -62,6 +63,11 @@
 #'   vertical line at each median.  Defaults to \code{show_median}.
 #' @param show_p_value Logical.  Show the P-value column (only drawn when a
 #'   \code{p_value} is given).  Default \code{TRUE}.
+#' @param censor_marks Logical.  Draw a short vertical tick on the curve at
+#'   each time with \code{n.censor > 0}: one tick per time, however many were
+#'   censored then.  Default \code{TRUE}.  A data-frame \code{sf} without an
+#'   \code{n.censor} column draws none.
+#' @param censor_size Height of a censor tick in px (default 8).
 #' @param opts Named list of further renderer options.  Named arguments take
 #'   precedence over the same key in \code{opts}.
 #' @param width,height Widget width and height as a CSS unit string or pixel
@@ -138,6 +144,8 @@ rd3survival <- function(sf,
                         show_median_ci    = TRUE,
                         show_median_lines = show_median,
                         show_p_value      = TRUE,
+                        censor_marks      = TRUE,
+                        censor_size       = NULL,
                         opts     = list(),
                         width    = NULL,
                         height   = NULL,
@@ -158,7 +166,7 @@ rd3survival <- function(sf,
     axis_font_size = axis_font_size, axis_label_font_size = axis_label_font_size,
     annotation_font_size = annotation_font_size, risk_font_size = risk_font_size,
     conf_int = conf_int, show_median = show_median, show_median_lines = show_median_lines,
-    show_p_value = show_p_value)
+    show_p_value = show_p_value, censor_marks = censor_marks, censor_size = censor_size)
   # Named arguments win over opts; NULL ones leave opts (and the renderer's defaults) alone.
   named <- named[!vapply(named, is.null, logical(1))]
   opts[names(named)] <- named

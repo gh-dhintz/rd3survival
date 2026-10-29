@@ -49,6 +49,8 @@
 #'   vertical line at each median.  Defaults to \code{show_median}.
 #' @param show_p_value Logical.  Show the log-rank p-value column (stratified
 #'   plots only).  Default \code{TRUE}.
+#' @param censor_marks,censor_size Censor ticks on the curves; see
+#'   \code{\link{rd3survival}}.
 #' @param conf_int Logical.  When \code{TRUE} (default), shades 95\%
 #'   confidence-interval bands around each curve.
 #' @param y_tick_count Number of evenly spaced y-axis ticks from 0 to 1.
@@ -139,6 +141,8 @@ rd3survival_km <- function(df,
                            show_median_ci    = TRUE,
                            show_median_lines = show_median,
                            show_p_value      = TRUE,
+                           censor_marks      = TRUE,
+                           censor_size       = NULL,
                            conf_int      = TRUE,
                            y_format      = NULL,
                            y_tick_count  = 5,
@@ -249,6 +253,8 @@ rd3survival_km <- function(df,
     show_median_ci    = show_median_ci,
     show_median_lines = show_median_lines,
     show_p_value      = show_p_value,
+    censor_marks      = censor_marks,
+    censor_size       = censor_size,
     opts       = list(n_patients = n_patients),
     width      = width,
     height     = height,

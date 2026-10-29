@@ -36,6 +36,8 @@ rd3survival(
   show_median_ci = TRUE,
   show_median_lines = show_median,
   show_p_value = TRUE,
+  censor_marks = TRUE,
+  censor_size = NULL,
   opts = list(),
   width = NULL,
   height = NULL,
@@ -46,7 +48,8 @@ rd3survival(
 \item{sf}{Either a \code{survfit} object (single-arm \code{~ 1} or
 stratified), or a data frame of curve rows with columns \code{time} and
 \code{estimate}, and optionally \code{conf.low}, \code{conf.high},
-\code{n.risk} and \code{strata} (the layout of \code{broom::tidy(survfit)}).
+\code{n.risk}, \code{n.censor} and \code{strata} (the layout of
+\code{broom::tidy(survfit)}).  Censor marks need \code{n.censor}.
 The data frame form draws curves computed elsewhere, e.g. already
 truncated or with masked counts; \code{n.risk} may be character.}
 
@@ -121,6 +124,13 @@ vertical line at each median.  Defaults to \code{show_median}.}
 
 \item{show_p_value}{Logical.  Show the P-value column (only drawn when a
 \code{p_value} is given).  Default \code{TRUE}.}
+
+\item{censor_marks}{Logical.  Draw a short vertical tick on the curve at
+each time with \code{n.censor > 0}: one tick per time, however many were
+censored then.  Default \code{TRUE}.  A data-frame \code{sf} without an
+\code{n.censor} column draws none.}
+
+\item{censor_size}{Height of a censor tick in px (default 8).}
 
 \item{opts}{Named list of further renderer options.  Named arguments take
 precedence over the same key in \code{opts}.}

@@ -115,6 +115,8 @@ htmlwidgets::saveWidget(p, "km.html", selfcontained = TRUE)
 | `show_median_ci` | logical | `TRUE` | Show the 95% CI after each median |
 | `show_median_lines` | logical | `show_median` | Draw the dashed 50% line and median crosshairs |
 | `show_p_value` | logical | `TRUE` | Show the log-rank p-value column (stratified only) |
+| `censor_marks` | logical | `TRUE` | Tick the curve at each censoring time (needs `n.censor` in data-frame input) |
+| `censor_size` | numeric | `8` | Censor tick height in px |
 | `conf_int` | logical | `TRUE` | Shade the 95% CI band around each curve |
 | `y_format` | string | `".2%"` | D3 format for y-axis ticks (see table below) |
 | `y_tick_count` | numeric | `5` | Number of y-axis ticks (default gives 0%, 25%, 50%, 75%, 100%) |

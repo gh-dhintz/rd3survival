@@ -3,6 +3,10 @@ path.estimate {
     stroke:steelblue;
 }
 
+line.censor {
+    stroke-width: 1.5;
+}
+
 path.confidence {
     fill:steelblue;
     fill-opacity:.35;
