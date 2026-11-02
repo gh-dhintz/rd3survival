@@ -3,6 +3,12 @@
 // window.rd3survival_d3 -- so another d3 version on the page (before or after) cannot replace it.
 (function(d3) {
 
+// One clip-path id per drawn chart: a fixed id is shared by every widget on the page, and
+// url(#id) resolves to the FIRST one in the document -- so with several panels (a reveal.js deck
+// holds all its slides in one page) a curve was clipped to another panel's box, or to one drawn
+// on a hidden slide, and ran past xlim.
+var clipSeq = 0;
+
 d3.survival = function(message) {
   
   var margin = {top:30,left:75,bottom:50,right:40},
@@ -152,8 +158,10 @@ d3.survival = function(message) {
       .on("end", brushed)
     
       
+    var clipId = "limit-clip-" + (++clipSeq),
+        clipUrl = "url(#" + clipId + ")";
     svg.append("defs").append("clipPath")
-        .attr("id", "limit-clip")
+        .attr("id", clipId)
         .append("rect")
         .attr("width", width)
         .attr("height", height);
@@ -180,7 +188,7 @@ d3.survival = function(message) {
         .call(xGrid)
 
     var strata = svg.append('g')
-        .attr('clip-path','url(#limit-clip)')
+        .attr('clip-path',clipUrl)
         .selectAll('.strata')
         .data(nest)
         .enter()
@@ -340,7 +348,7 @@ d3.survival = function(message) {
 
     // Median crosshair reference lines (clipped to plot area)
     if (showMedianLines && opts.medians && opts.medians.length) {
-      var refGroup = svg.append('g').attr('clip-path', 'url(#limit-clip)');
+      var refGroup = svg.append('g').attr('clip-path', clipUrl);
 
       refGroup.append('line')
         .classed('median-ref horiz', true)
@@ -365,7 +373,7 @@ d3.survival = function(message) {
 
     // Vertical crosshair (clipped, sits above data paths)
     var crosshair = svg.append('g')
-      .attr('clip-path', 'url(#limit-clip)')
+      .attr('clip-path', clipUrl)
       .append('line')
       .attr('class', 'tt-crosshair')
       .attr('y1', 0).attr('y2', height)
